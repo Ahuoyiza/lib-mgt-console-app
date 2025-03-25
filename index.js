@@ -122,16 +122,95 @@ class Library {
         return true;
     }
 
+    // return a borrowed book
+    returnBook(bookId){
+        const book = this.findBook(bookId);
+        if(!book){
+            console.log(`Error!: The book with id: ${bookId} not found`);
+            return false;
+        }
+        if(book.available){
+            console.log(`Error!: The book titled: ${book.title} is not currently borrowed`);
+            return false;
+        }
+
+        const borrower = this.findBorrower(book.borrowedBy);
+        if(!borrower){
+            console.log(`Error! the associated borrower not found`);
+            // reset
+            book.available = true;
+            book.borrowedBy = null;
+            return true;
+        }
+
+        // update:  book status 
+        book.available = true;
+        book.borrowedBy = null;
+
+        // update borrower record
+        borrower.booksCurrentlyBorrowed = borrower.booksCurrentlyBorrowed.filter(id => id !== bookId) 
+
+        // update borrowing history
+        const historyEntry = borrower.borrowingHistory.find(entry => entry.bookId === bookId && entry.returnDate === null);
+        if(historyEntry){
+            historyEntry.returnDate = new Date();
+        }
+        console.log(`The book "${book.title}" has been returned successfully`)
+        // console.log(borrower.borrowingHistory);
+        return true;
+    }
+    
+    // search for books title, author, genre
+    searchBooks(query){
+        if(!query || query.trim() === '' ){
+            return [];
+        }
+        query = query.toLowerCase();
+
+       return this.books.filter(book =>
+            book.title.toLowerCase().includes(query) ||
+            book.author.toLowerCase().includes(query) ||
+            book.genre.toLowerCase().includes(query)
+        );
+// display in the user app view
+    }
+// list available books
+listAvailableBooks(){
+    const availableBooks = this.books.filter(book => book.available);
+
+    if (availableBooks.length === 0){
+        console.log(`No books available at the moment. Check again later`);
+        return [];
+    }
+
+    console.log(`
+        Available books: (${availableBooks.length}):`)
+    availableBooks.forEach(book => {
+        console.log(`ID: ${book.id}|
+            title: ${book.title}|
+        author: ${book.author}
+        genre: ${book.genre}`)
+    });
+
+    return availableBooks;
+
+    // list all borrowed books
+}
+
 }
 let lib = new Library('rise academy library');
 lib.addBook("dream count", "CNA", "romance");
-lib.addBorrower("Sophia", "soph@wise.com");
-lib.borrowBook(1,1)
-console.log(lib.books)
-console.log(lib.borrowers)
-lib.borrowBook(1,1)
-// lib.addBorrower("Test", "soph@wise.com");
-// lib.findBorrower(1)
+lib.addBook("Onyx storm", "Rebecaa Yaros", "fantasy");
+lib.addBook("Things fall apart", "Chinua Achebe", "historical fiction");
+lib.addBook("The thing around your neck", "Chinua Achebe", "something");
+// lib.addBorrower("Sophia", "soph@wise.com");
+// lib.borrowBook(1,1)
+// console.log(lib.books)
+// console.log(lib.borrowers)
+// lib.returnBook(1)
+lib.searchBooks("thing");
+
+
 
 
 // 
